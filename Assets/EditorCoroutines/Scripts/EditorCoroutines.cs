@@ -75,7 +75,27 @@ namespace EditorCoroutines
 			}
 		}
 
-		struct YieldWWW : ICoroutineYield
+	    struct YieldWaitUntil : ICoroutineYield
+	    {
+	        public Func<bool> predicate;
+
+	        public bool IsDone(float deltaTime)
+	        {
+	            return predicate();
+	        }
+	    }
+
+	    struct YieldWaitWhile : ICoroutineYield
+	    {
+	        public Func<bool> predicate;
+
+	        public bool IsDone(float deltaTime)
+	        {
+	            return !predicate();
+	        }
+	    }
+
+        struct YieldWWW : ICoroutineYield
 		{
 			public WWW Www;
 
@@ -354,7 +374,21 @@ namespace EditorCoroutines
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
 				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (float) seconds};
 			}
-			else if (current is WWW)
+			else if (current is WaitUntil)
+			{
+			    coroutine.currentYield = new YieldWaitUntil()
+			    {
+			        predicate = (Func<bool>)GetInstanceField(typeof(WaitUntil), current, "m_Predicate")
+			    };
+			}
+			else if (current is WaitWhile)
+			{
+			    coroutine.currentYield = new YieldWaitWhile()
+			    {
+			        predicate = (Func<bool>)GetInstanceField(typeof(WaitWhile), current, "m_Predicate")
+			    };
+			}
+            else if (current is WWW)
 			{
 				coroutine.currentYield = new YieldWWW {Www = (WWW) current};
 			}
