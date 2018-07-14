@@ -75,27 +75,21 @@ namespace EditorCoroutines
 			}
 		}
 
-	    struct YieldWaitUntil : ICoroutineYield
-	    {
-	        public Func<bool> predicate;
+		struct YieldCustomYieldInstruction : ICoroutineYield
+		{
+			public CustomYieldInstruction customYield;
 
-	        public bool IsDone(float deltaTime)
-	        {
-	            return predicate();
-	        }
-	    }
+			public bool IsDone(float deltaTime)
+			{
+                /*
+                 * To keep coroutine suspended return true. To let coroutine proceed with execution return false.
+                 * From: https://docs.unity3d.com/ScriptReference/CustomYieldInstruction.html
+                 */
+                return !customYield.keepWaiting;
+			}
+		}
 
-	    struct YieldWaitWhile : ICoroutineYield
-	    {
-	        public Func<bool> predicate;
-
-	        public bool IsDone(float deltaTime)
-	        {
-	            return !predicate();
-	        }
-	    }
-
-        struct YieldWWW : ICoroutineYield
+		struct YieldWWW : ICoroutineYield
 		{
 			public WWW Www;
 
@@ -374,21 +368,14 @@ namespace EditorCoroutines
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
 				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (float) seconds};
 			}
-			else if (current is WaitUntil)
+			else if (current is CustomYieldInstruction)
 			{
-			    coroutine.currentYield = new YieldWaitUntil()
-			    {
-			        predicate = (Func<bool>)GetInstanceField(typeof(WaitUntil), current, "m_Predicate")
-			    };
+				coroutine.currentYield = new YieldCustomYieldInstruction()
+				{
+					customYield = current as CustomYieldInstruction
+				};
 			}
-			else if (current is WaitWhile)
-			{
-			    coroutine.currentYield = new YieldWaitWhile()
-			    {
-			        predicate = (Func<bool>)GetInstanceField(typeof(WaitWhile), current, "m_Predicate")
-			    };
-			}
-            else if (current is WWW)
+			else if (current is WWW)
 			{
 				coroutine.currentYield = new YieldWWW {Www = (WWW) current};
 			}
