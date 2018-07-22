@@ -347,18 +347,23 @@ namespace EditorCoroutines
 			object current = coroutine.routine.Current;
 			if (current == null)
 			{
-				return false;
+				coroutine.currentYield = new YieldDefault();
 			}
 			else if (current is WaitForSeconds)
 			{
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
-				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (float) seconds};
+				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = seconds};
+			}
+			else if (current is WaitForSecondsRealtime)
+			{
+				float waitTime = float.Parse(GetInstanceField(typeof(WaitForSecondsRealtime), current, "waitTime").ToString());
+				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (waitTime - Time.realtimeSinceStartup)};
 			}
 			else if (current is WWW)
 			{
 				coroutine.currentYield = new YieldWWW {Www = (WWW) current};
 			}
-			else if (current is WaitForFixedUpdate)
+			else if (current is WaitForFixedUpdate || current is WaitForEndOfFrame)
 			{
 				coroutine.currentYield = new YieldDefault();
 			}
