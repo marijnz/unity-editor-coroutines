@@ -81,11 +81,7 @@ namespace EditorCoroutines
 
 			public bool IsDone(float deltaTime)
 			{
-                /*
-                 * To keep coroutine suspended return true. To let coroutine proceed with execution return false.
-                 * From: https://docs.unity3d.com/ScriptReference/CustomYieldInstruction.html
-                 */
-                return !customYield.keepWaiting;
+				return !customYield.keepWaiting;
 			}
 		}
 
