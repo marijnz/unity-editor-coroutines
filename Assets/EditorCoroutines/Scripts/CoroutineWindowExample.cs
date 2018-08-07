@@ -42,6 +42,28 @@ namespace EditorCoroutines
 			{
 				this.StopAllCoroutines();
 			}
+
+			if (GUILayout.Button("WaitUntil/WaitWhile"))
+			{
+				status = false;
+				this.StartCoroutine(ExampleWaitUntilWhile());
+			}
+
+			if (GUILayout.Button("Switch For WaitUntil/WaitWhile:" + (status ? "On" : "Off")))
+			{
+				status = !status;
+				EditorUtility.SetDirty(this);
+			}
+		}
+
+		private bool status;
+
+		IEnumerator ExampleWaitUntilWhile()
+		{
+			yield return new WaitUntil(()=>status);
+			Debug.Log("Switch On");
+			yield return new WaitWhile(()=>status);
+			Debug.Log("Switch Off");
 		}
 
 		IEnumerator Example()

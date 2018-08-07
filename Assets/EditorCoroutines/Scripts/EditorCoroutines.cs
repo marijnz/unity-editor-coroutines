@@ -75,6 +75,16 @@ namespace EditorCoroutines
 			}
 		}
 
+		struct YieldCustomYieldInstruction : ICoroutineYield
+		{
+			public CustomYieldInstruction customYield;
+
+			public bool IsDone(float deltaTime)
+			{
+				return !customYield.keepWaiting;
+			}
+		}
+
 		struct YieldWWW : ICoroutineYield
 		{
 			public WWW Www;
@@ -353,6 +363,13 @@ namespace EditorCoroutines
 			{
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
 				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (float) seconds};
+			}
+			else if (current is CustomYieldInstruction)
+			{
+				coroutine.currentYield = new YieldCustomYieldInstruction()
+				{
+					customYield = current as CustomYieldInstruction
+				};
 			}
 			else if (current is WWW)
 			{
