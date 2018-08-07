@@ -45,24 +45,24 @@ namespace EditorCoroutines
 
 			if (GUILayout.Button("WaitUntil/WaitWhile"))
 			{
-				_status = false;
+				status = false;
 				this.StartCoroutine(ExampleWaitUntilWhile());
 			}
 
-			if (GUILayout.Button("Switch For WaitUntil/WaitWhile:" + (_status ? "On" : "Off")))
+			if (GUILayout.Button("Switch For WaitUntil/WaitWhile:" + (status ? "On" : "Off")))
 			{
-				_status = !_status;
+				status = !status;
 				EditorUtility.SetDirty(this);
 			}
 		}
 
-		private bool _status;
+		private bool status;
 
 		IEnumerator ExampleWaitUntilWhile()
 		{
-			yield return new WaitUntil(()=>_status);
+			yield return new WaitUntil(()=>status);
 			Debug.Log("Switch On");
-			yield return new WaitWhile(()=>_status);
+			yield return new WaitWhile(()=>status);
 			Debug.Log("Switch Off");
 		}
 
