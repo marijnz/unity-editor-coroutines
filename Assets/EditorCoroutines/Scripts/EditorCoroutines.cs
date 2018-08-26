@@ -354,11 +354,6 @@ namespace EditorCoroutines
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
 				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = seconds};
 			}
-			else if (current is WaitForSecondsRealtime)
-			{
-				float waitTime = float.Parse(GetInstanceField(typeof(WaitForSecondsRealtime), current, "waitTime").ToString());
-				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = (waitTime - Time.realtimeSinceStartup)};
-			}
 			else if (current is WWW)
 			{
 				coroutine.currentYield = new YieldWWW {Www = (WWW) current};
