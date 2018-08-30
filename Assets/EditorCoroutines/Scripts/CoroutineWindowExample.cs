@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEditor;
 
-namespace EditorCoroutines
+namespace marijnz.EditorCoroutines
 {
 	public class CoroutineWindowExample : EditorWindow
 	{

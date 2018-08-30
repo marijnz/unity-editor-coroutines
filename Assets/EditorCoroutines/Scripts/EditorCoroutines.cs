@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Reflection;
 
-namespace EditorCoroutines
+namespace marijnz.EditorCoroutines
 {
 	public class EditorCoroutines
 	{
