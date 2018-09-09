@@ -1,11 +1,11 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using UnityEditor;
 using System.Collections.Generic;
 using System;
 using System.Reflection;
 
-namespace EditorCoroutines
+namespace marijnz.EditorCoroutines
 {
 	public class EditorCoroutines
 	{
@@ -21,6 +21,22 @@ namespace EditorCoroutines
 			public string ownerType;
 
 			public bool finished = false;
+			public bool errored = false;
+			
+			public bool HasErroredRecursive()
+			{
+				if (errored)
+				{
+					return true;
+				}
+
+				if (currentYield is YieldNestedCoroutine)
+				{
+					return ((YieldNestedCoroutine) currentYield).coroutine.HasErroredRecursive();
+				}
+
+				return false;
+			}
 
 			public EditorCoroutine(IEnumerator routine, int ownerHash, string ownerType)
 			{
@@ -72,6 +88,16 @@ namespace EditorCoroutines
 			{
 				timeLeft -= deltaTime;
 				return timeLeft < 0;
+			}
+		}
+
+		struct YieldCustomYieldInstruction : ICoroutineYield
+		{
+			public CustomYieldInstruction customYield;
+
+			public bool IsDone(float deltaTime)
+			{
+				return !customYield.keepWaiting;
 			}
 		}
 
@@ -310,19 +336,53 @@ namespace EditorCoroutines
 				for (int j = coroutines.Count - 1; j >= 0; j--)
 				{
 					EditorCoroutine coroutine = coroutines[j];
-
-					if (!coroutine.currentYield.IsDone(deltaTime))
+					
+					bool isDone = coroutine.currentYield.IsDone(deltaTime);
+					if (!isDone || coroutine.errored)
 					{
 						continue;
 					}
 
-					if (!MoveNext(coroutine))
+					try // Move next may fail
+					{
+						if(!MoveNext(coroutine))
+						{
+							coroutines.RemoveAt(j);
+							coroutine.currentYield = null;
+							coroutine.finished = true;
+						}
+
+						if (coroutines.Count == 0)
+						{
+							coroutineDict.Remove(coroutine.ownerUniqueHash);
+						}
+					}
+					catch (Exception)
+					{
+						// Track the coroutine as having errored
+						coroutine.errored = true;
+						throw; // Rethrow the exception now that we have tracked the coroutine exception
+					}
+
+					
+				}
+			}
+
+			// Cleanup coroutines if they or any of their dependent children have errored
+			for (var i = 0; i < tempCoroutineList.Count; i++)
+			{
+				List<EditorCoroutine> coroutines = tempCoroutineList[i];
+
+				for (int j = 0; j < coroutines.Count; j++)
+				{
+					EditorCoroutine coroutine = coroutines[j];
+					if (coroutine.HasErroredRecursive())
 					{
 						coroutines.RemoveAt(j);
 						coroutine.currentYield = null;
 						coroutine.finished = true;
 					}
-
+					
 					if (coroutines.Count == 0)
 					{
 						coroutineDict.Remove(coroutine.ownerUniqueHash);
@@ -330,14 +390,14 @@ namespace EditorCoroutines
 				}
 			}
 		}
-
+		
 		static bool MoveNext(EditorCoroutine coroutine)
 		{
 			if (coroutine.routine.MoveNext())
 			{
 				return Process(coroutine);
 			}
-
+			
 			return false;
 		}
 
@@ -353,6 +413,13 @@ namespace EditorCoroutines
 			{
 				float seconds = float.Parse(GetInstanceField(typeof(WaitForSeconds), current, "m_Seconds").ToString());
 				coroutine.currentYield = new YieldWaitForSeconds() {timeLeft = seconds};
+			}
+			else if (current is CustomYieldInstruction)
+			{
+				coroutine.currentYield = new YieldCustomYieldInstruction()
+				{
+					customYield = current as CustomYieldInstruction
+				};
 			}
 			else if (current is WWW)
 			{
