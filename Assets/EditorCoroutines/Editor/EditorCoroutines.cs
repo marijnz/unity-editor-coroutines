@@ -335,7 +335,7 @@ namespace marijnz.EditorCoroutines
 
 					if (coroutines.Count == 0)
 					{
-						coroutineDict.Remove(coroutine.ownerUniqueHash);
+						coroutineDict.Remove(coroutine.routineUniqueHash);
 					}
 				}
 			}
